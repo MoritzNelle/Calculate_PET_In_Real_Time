@@ -114,6 +114,8 @@ def calc_PET():
     R_ng    = Rn * 0.408                        # Net radiation in MJ/m²/day
     ET_rad  = DT * R_ng                         # Radiation term in mm/day
     ET_wind = PT * TT * (es - ea)               # Wind term in mm/day
+    
+    global ET_0
     ET_0    = ET_rad + ET_wind                  # Potential evapotranspiration in mm/day
 
     #print("T_mean:\t", T_mean, "\nRs:\t", Rs, "\nu2:\t", u2, "\nDELTA:\t", DELTA, "\np:\t", p, "\ny:\t", y, "\nDT:\t", DT, "\nPT:\t", PT, "\nTT:\t", TT, "\nes:\t", es, "\nea:\t", ea, "\ndr:\t", dr, "\ndelta:\t", delta, "\nlat_rad:", lat_rad, "\nws:\t", ws, "\nRa:\t", Ra, "\nRso:\t", Rso, "\nRns:\t", Rns, "\nRnl:\t", Rnl, "\nRn:\t", Rn, "\nR_ng:\t", R_ng, "\nET_rad:\t", ET_rad, "\nET_wind:", ET_wind, "\nET_0:\t", ET_0)
@@ -164,12 +166,21 @@ def visulize_data():
 
     plt.show()
 
+def calc_water_deficit():
+
+    water_content = 0
+    water_deficit = water_content + (ET_0 - weather_data_avg.rain)
+    return water_deficit
+    
+
 
 if __name__ == "__main__":
     get_save_data("https://veenkampen.nl/data/10min_current.txt")
     extract_data(filename)
     #print (weather_data_avg.temperature, weather_data_avg.humidity, weather_data_avg.wind_speed, weather_data_avg.solar_radiation, weather_data_avg.pressure, weather_data_avg.rain)
-    print ("Potential evapotranspiration: ",calc_PET(), "mm/day")
+    print ("\nPotential evapotranspiration:\t",calc_PET(), "mm/day")
+    print ("Water deficit:\t\t\t", calc_water_deficit(), "mm/day\n")
     visulize_data()
+    
     
     print("Job done!")
