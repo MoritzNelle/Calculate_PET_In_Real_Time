@@ -7,6 +7,8 @@ import os
 
 # USER VARIABLES (GLOBAL)
 start_date = date(2024, 5, 13)  #YYYY, MM, DD   # Start date for the data scraping
+days_since_sowing = (datetime.now().date() - start_date).days
+
 save_data_to_file = True        # Save the scraped data to a file
 url_24h = "https://veenkampen.nl/data/10min_current.txt"  # URL to scrape the data from
 
@@ -126,7 +128,7 @@ def extract_data(filename): #MARK: Extract data from file
         wind24hAverage = sum(wind) / len(wind)
         radi24hAverage = sum(radi) / len(radi)
         pres24hAverage = sum(pres) / len(pres)
-        rain24hAverage = sum(rain) / len(rain)
+        rain24hAverage = sum(rain) #/ len(rain)
 
         data.close()
         
@@ -165,7 +167,7 @@ def extract_data(filename): #MARK: Extract data from file
             windSowingAverage = sum(wind) / len(wind)
             radiSowingAverage = sum(radi) / len(radi)
             presSowingAverage = sum(pres) / len(pres)
-            rainSowingAverage = sum(rain) / len(rain)
+            rainSowingAverage = sum(rain) #/ len(rain)
 
             data.close()
 
@@ -177,7 +179,7 @@ def extract_data(filename): #MARK: Extract data from file
         raise ValueError("Filename must be a string or a list of strings")
 
 
-def calc_PET(weather_data):
+def calc_PET(weather_data): #MARK: PET calculation
     T_mean   = weather_data.temperature      # Mean temperature in degrees Celsius
     R_s      = weather_data.solar_radiation  # Solar radiation in MJ/m²/day
     u_2      = weather_data.wind_speed       # Wind speed at 2 meters in m/s
@@ -281,9 +283,9 @@ def visulize_data():
 
     plt.show()
 
-def calc_water_deficit(weather_data):
-    water_content = 0
-    water_deficit = water_content + (ET_0 - weather_data.rain)
+
+def calc_water_deficit(weather_data):#MARK: Water deficit
+    water_deficit = (ET_0 * days_since_sowing) - weather_data.rain
     return water_deficit
 
 
@@ -294,8 +296,9 @@ if __name__ == "__main__":
     extract_data(filename)
 
     print ("\n24H REPORT:")
-    print ("Potential evapotranspiration:\t",calc_PET(weather_data_avg_24h), "mm/day")
-    print ("Water deficit:\t\t\t", calc_water_deficit(weather_data_avg_24h), "mm/day\n")
+    print ("Potential evapotranspiration:\t", round(calc_PET(weather_data_avg_24h), 2), "mm/day")
+    print ("Rainfall:\t\t\t", round(weather_data_avg_24h.rain,2), "mm/day")
+    print ("Water deficit:\t\t\t", round(calc_water_deficit(weather_data_avg_24h),2), "mm/day\n")
     #print (weather_data_avg_24h.temperature, weather_data_avg_24h.humidity, weather_data_avg_24h.wind_speed, weather_data_avg_24h.solar_radiation, weather_data_avg_24h.pressure, weather_data_avg_24h.rain)
 
 
@@ -303,8 +306,9 @@ if __name__ == "__main__":
     extract_data(file_names())
     
     print ("SINCE SOWING REPORT (untill last midnight):")
-    print ("Acumulative potential evapotranspiration:\t",calc_PET(weather_data_avg_sowing), "mm/day")
-    print ("Acumulative water deficit:\t\t\t", calc_water_deficit(weather_data_avg_sowing), "mm/day\n")
+    print ("Acumulative potential evapotranspiration:\t", round (calc_PET(weather_data_avg_sowing) * days_since_sowing,2), "mm")
+    print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
+    print ("Acumulative water deficit:\t\t\t",  round (calc_water_deficit(weather_data_avg_sowing),2), "mm\n")
 
 
     #visulize_data()
