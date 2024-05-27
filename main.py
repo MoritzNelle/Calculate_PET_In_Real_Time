@@ -340,9 +340,9 @@ if __name__ == "__main__":                          # MARK: Main
     print ("IRRIGATION NEEDED (90% efficiency):")
     overall_irrigation = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain / 0.9
     print (f"Irrigation needed overall ({overall_area} m2):\t\t", round (overall_irrigation,2), "mm")
-    print (f"Irrigation System 1 ({m2_irrigation_1} m2):\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation,2), "mm")
-    print (f"Irrigation System 2 ({m2_irrigation_2} m2):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation,2), "mm")
-    print (f"Irrigation System 3 ({m2_irrigation_3} m2):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation,2), "mm\n")
+    print (f"Irrigation System 1 ({m2_irrigation_1} m2):\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation*m2_irrigation_1, 2), " L")
+    print (f"Irrigation System 2 ({m2_irrigation_2} m2):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation*m2_irrigation_2, 2), " L")
+    print (f"Irrigation System 3 ({m2_irrigation_3} m2):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation*m2_irrigation_3, 2), " L\n")
 
 
     #visulize_data()
