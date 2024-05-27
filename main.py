@@ -10,6 +10,7 @@ start_date      = date(2024, 5, 13)                 #YYYY, MM, DD   # Start date
 m2_irrigation_1 = 150                               # Area in m² that is covered by irrigation system 1
 m2_irrigation_2 = 150                               # Area in m² that is covered by irrigation system 2
 m2_irrigation_3 = 200                               # Area in m² that is covered by irrigation system 3
+latitude        = 51.989                            # Latitude of the location in degrees
 
 # SYSTEM VARIABLES (GLOBAL)
 overall_area = m2_irrigation_1 + m2_irrigation_2 + m2_irrigation_3
@@ -210,7 +211,7 @@ def calc_PET(weather_data):                             #MARK: PET calculation
     e_a      = e_s * (weather_data.humidity/100)        # Actual vapor pressure in kPa
     dr       = 1 + 0.033 * math.cos((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday) # Inverse relative distance Earth-Sun
     delta    = 0.409 * math.sin((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday - 1.39) # Solar declination in radians
-    lat_rad  = math.radians(51.989)                     #phi
+    lat_rad  = math.radians(latitude)                     #phi
     w_s      = math.acos(-math.tan(lat_rad) * math.tan(delta)) # Sunset hour angle in radians
     R_a      = 24 * 60 / math.pi * 0.082 * dr * (w_s * math.sin(lat_rad) * math.sin(delta) + math.cos(lat_rad) * math.cos(delta) * math.sin(w_s)) # Extraterrestrial radiation in MJ/m²/day
     R_so     = (0.75 + 2 * 10 ** -5 * 9.5) * R_a        # Clear-sky solar radiation in MJ/m²/day
