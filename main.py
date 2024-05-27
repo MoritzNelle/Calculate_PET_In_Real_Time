@@ -6,10 +6,14 @@ import matplotlib.pyplot as plt
 import os
 
 # USER VARIABLES (GLOBAL)
-start_date = date(2024, 5, 13)  #YYYY, MM, DD   # Start date for the data scraping
-days_since_sowing = (datetime.now().date() - start_date).days
+start_date      = date(2024, 5, 13)  #YYYY, MM, DD   # Start date for the data scraping
+m2_irrigation_1 = 150   # Area in m² that is covered by irrigation system 1
+m2_irrigation_2 = 150   # Area in m² that is covered by irrigation system 2
+m2_irrigation_3 = 200   # Area in m² that is covered by irrigation system 3
 
-save_data_to_file = True        # Save the scraped data to a file
+# SYSTEM VARIABLES (GLOBAL)
+overall_area = m2_irrigation_1 + m2_irrigation_2 + m2_irrigation_3
+days_since_sowing = (datetime.now().date() - start_date).days
 url_24h = "https://veenkampen.nl/data/10min_current.txt"  # URL to scrape the data from
 
 
@@ -31,7 +35,7 @@ def get_save_data(url):#MARK: get and save data
         with open(filename, "w") as file:    # Save the scraped text into a file
             file.write(response.text)
 
-        print(f"Scraped text saved to {filename}")
+        print(f"Weather data saved to {filename}")
 
     elif isinstance(url, list): #list of URLs, not a single URL, since sowing data
         for day in url:
@@ -51,7 +55,7 @@ def get_save_data(url):#MARK: get and save data
         raise ValueError("URL must be a string or a list of strings")
 
 
-def compile_weather_data_avg_24h(temperature, humidity, wind_speed, solar_radiation, pressure, rain):
+def compile_weather_data_avg_24h(temperature, humidity, wind_speed, solar_radiation, pressure, rain): #MARK: Class Def
     class WeatherData_avg:
         def __init__(self, temperature, humidity, wind_speed, solar_radiation, pressure, rain):
             self.temperature        = temperature
@@ -284,11 +288,6 @@ def visulize_data():
     plt.show()
 
 
-def calc_water_deficit(weather_data):#MARK: Water deficit
-    water_deficit = (ET_0 * days_since_sowing) - weather_data.rain
-    return water_deficit
-
-
 
 
 if __name__ == "__main__":
@@ -296,9 +295,14 @@ if __name__ == "__main__":
     extract_data(filename)
 
     print ("\n24H REPORT:")
-    print ("Potential evapotranspiration:\t", round(calc_PET(weather_data_avg_24h), 2), "mm/day")
-    print ("Rainfall:\t\t\t", round(weather_data_avg_24h.rain,2), "mm/day")
-    print ("Water deficit:\t\t\t", round(calc_water_deficit(weather_data_avg_24h),2), "mm/day\n")
+    print ("Potential evapotranspiration:\t\t\t", round(calc_PET(weather_data_avg_24h), 2), "mm/day")
+
+    if weather_data_avg_24h.rain == 0:
+        print ("Rainfall:\t\t\t\t\t", "na")
+    else:
+        print ("Rainfall:\t\t\t\t\t", round(weather_data_avg_24h.rain,2), "mm/day")
+
+    print ("Water deficit:\t\t\t\t\t", round(ET_0 - weather_data_avg_24h.rain,2), "mm/day\n")
     #print (weather_data_avg_24h.temperature, weather_data_avg_24h.humidity, weather_data_avg_24h.wind_speed, weather_data_avg_24h.solar_radiation, weather_data_avg_24h.pressure, weather_data_avg_24h.rain)
 
 
@@ -307,11 +311,21 @@ if __name__ == "__main__":
     
     print ("SINCE SOWING REPORT (untill last midnight):")
     print ("Acumulative potential evapotranspiration:\t", round (calc_PET(weather_data_avg_sowing) * days_since_sowing,2), "mm")
-    print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
-    print ("Acumulative water deficit:\t\t\t",  round (calc_water_deficit(weather_data_avg_sowing),2), "mm\n")
 
+    if weather_data_avg_sowing.rain == 0:
+        print ("Acumulative rainfall:\t\t\t\t", "na")
+    else:
+        print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
+
+    print ("Acumulative water deficit:\t\t\t",  round ((ET_0*days_since_sowing) - weather_data_avg_sowing.rain, 2), "mm\n")
+
+    print ("IRRIGATION NEEDED (90% efficiency):")
+    overall_irrigation = (ET_0*days_since_sowing) - weather_data_avg_sowing.rain / 0.9
+    print ("Irrigation needed overall:\t\t\t", round (overall_irrigation,2), "mm")
+    print ("Irrigation System 1:\t\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation,2), "mm")
+    print ("Irrigation System 2:\t\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation,2), "mm")
+    print ("Irrigation System 3:\t\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation,2), "mm\n")
 
     #visulize_data()
-
 
     print("Job done!")
