@@ -1,4 +1,8 @@
-entire_raw_data_since_sowing/
-entrie_raw_data_24h/
+entire_raw_data_since_sowing/*
+!entire_raw_data_since_sowing/.gitkeep
+
+entrie_raw_data_24h/*
+!entrie_raw_data_24h/.gitkeep
+
 main2.py
 test.py

@@ -38,7 +38,7 @@ def get_save_data(url):                             #MARK: get and save data
 
     elif isinstance(url, list):                     #list of URLs, not a single URL, since sowing data
         for day in url:
-            filename_since_sowing = f"entire_raw_data_since_sowing/raw_data_since_{timestamp_from_URL(day)}.csv"
+            filename_since_sowing = f"entire_raw_data_since_sowing/raw_data_since_sowing_{timestamp_from_URL(day)}.csv"
 
             if os.path.isfile(filename_since_sowing):
                 #print(f"File \"{filename_since_sowing}\" already exists.")
