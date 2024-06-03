@@ -4,13 +4,20 @@ from datetime import date, timedelta
 import math
 import matplotlib.pyplot as plt
 import os
+import json
 
-# USER VARIABLES (GLOBAL)
-start_date      = date(2024, 5, 13)                 #YYYY, MM, DD   # Start date for the data scraping
-m2_irrigation_1 = 150                               # Area in m² that is covered by irrigation system 1
-m2_irrigation_2 = 150                               # Area in m² that is covered by irrigation system 2
-m2_irrigation_3 = 200                               # Area in m² that is covered by irrigation system 3
-latitude        = 51.989                            # Latitude of the location in degrees (decimal)
+
+
+# Load data from JSON file
+with open('core_variables.json', 'r') as file:
+    data = json.load(file)
+
+# USER VARIABLES from json file
+start_date      = datetime.strptime(data['start_date'], "%Y-%m-%d").date()
+m2_irrigation_1 = data['m2_irrigation_1']
+m2_irrigation_2 = data['m2_irrigation_2']
+m2_irrigation_3 = data['m2_irrigation_3']
+latitude        = data['latitude']                            # Latitude of the location in degrees (decimal)
 
 # SYSTEM VARIABLES (GLOBAL)
 overall_area = m2_irrigation_1 + m2_irrigation_2 + m2_irrigation_3
@@ -257,6 +264,64 @@ def file_names():                                   # MARK:Filenames
     return filenames
 
 
+def add_irrigation():
+    irrigation_data = {}
+
+    # Get user input for irrigation data
+    irrigation_data['date'] = input("Enter the date of irrigation (YYYY-MM-DD): ")
+    irrigation_data['time'] = input("Enter the time of irrigation (HH:MM): ")
+    irrigation_data['amount'] = float(input("Enter the amount of water applied (in mm): "))
+
+    # Write irrigation data to a file
+    with open('irrigation_data.json', 'r+') as file:
+        data = json.load(file)
+        data.append(irrigation_data)
+        file.seek(0)
+        file.write(json.dumps(data, indent=4))
+        file.truncate()
+
+    print("Irrigation data has been recorded.")
+
+
+def print_irrigation_data():
+    with open('irrigation_data.json', 'r') as file:
+        for line in file:
+            data = json.loads(line)
+            print("Date:\t", data['date'])
+            print("Time:\t", data['time'])
+            print("Amount:\t", data['amount'], "mm")
+            print()
+
+
+def change_core_variables():
+    core_variables = {
+        "start_date": input("Enter the start date (YYYY-MM-DD): "),
+        "m2_irrigation_1": float(input("Enter the area covered by irrigation system 1 (in m²): ")),
+        "m2_irrigation_2": float(input("Enter the area covered by irrigation system 2 (in m²): ")),
+        "m2_irrigation_3": float(input("Enter the area covered by irrigation system 3 (in m²): ")),
+        "latitude": float(input("Enter the latitude of the location (in degrees, decimal): "))
+    }
+
+    with open('core_variables.json', 'w') as file:
+        json.dump(core_variables, file)
+
+    print("Core variables have been updated and saved to core_variables.json.")
+
+
+def cal_water_deficit():
+    sum_irrigation = 0
+
+    with open('irrigation_data.json', 'r') as file:
+        irrigation_data = json.load(file)
+
+    for data in irrigation_data:    # Calculate the total irrigation amount
+        sum_irrigation += data['amount']
+
+    water_deficit = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain - sum_irrigation
+
+    return water_deficit
+
+
 def visulize_data():                                #MARK: Visualize data
     fig, axs = plt.subplots(3, 2, figsize=(15, 60)) # Increase the figsize to create more vertical space
 
@@ -304,6 +369,24 @@ def visulize_data():                                #MARK: Visualize data
 
 
 if __name__ == "__main__":                          # MARK: Main
+    
+    while True:
+        user_input = input("> ")
+        
+        if user_input == "add irrigation":
+            add_irrigation()
+        elif user_input == "print irrigation":
+            print_irrigation_data()
+        elif user_input == "visualize data":
+            visualize_data()
+        elif user_input == "exit":
+            exit()
+        elif user_input == "":
+            break
+        elif user_input == "change core variables":
+            change_core_variables()
+        else:
+            print("Invalid command.")
 
 # 24h-REPORT   
     get_save_data(url_24h)
@@ -337,17 +420,15 @@ if __name__ == "__main__":                          # MARK: Main
     else:
         print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
 
-    water_deficit = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain
-    print ("Water deficit:\t\t\t\t\t",  round (water_deficit, 2), "mm\n")
+    print ("Water deficit:\t\t\t\t\t",  round (cal_water_deficit(), 2), "mm\n")
 
     print ("IRRIGATION NEEDED (90% efficiency):")
-    overall_irrigation = (water_deficit * overall_area) / 0.9
+    overall_irrigation = (cal_water_deficit() * overall_area) / 0.9
     print (f"Irrigation needed overall ({overall_area} m²):\t\t", round ((overall_irrigation), 2), "L")
     print (f"Irrigation System 1 ({m2_irrigation_1} m²):\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation, 2), "L")
     print (f"Irrigation System 2 ({m2_irrigation_2} m²):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation, 2), "L")
     print (f"Irrigation System 3 ({m2_irrigation_3} m²):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation, 2), "L\n")
 
+    #visulize_data()
 
-    visulize_data()
-
-    print("Job done!\n")
+    print("Job done!")
