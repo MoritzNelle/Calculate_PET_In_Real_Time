@@ -202,23 +202,23 @@ def extract_data(filename):                         #MARK: Extract data from fil
 
     else:
         raise ValueError("Filename must be a string or a list of strings")
+#ahhhhhhhhhhhhhhhhhhhh
 
-
-def calc_PET(weather_data):                             #MARK: PET calculation
-    T_mean   = weather_data.temperature                 # Mean temperature in degrees Celsius
-    R_s      = weather_data.solar_radiation             # Solar radiation in MJ/m²/day
-    u_2      = weather_data.wind_speed                  # Wind speed at 2 meters in m/s
+def calc_PET(T_mean, R_s, u_2, p, e_a):                 #MARK: PET calculation
+    # T_mean   = weather_data.temperature                 # Mean temperature in degrees Celsius
+    # R_s      = weather_data.solar_radiation             # Solar radiation in MJ/m²/day
+    # u_2      = weather_data.wind_speed                  # Wind speed at 2 meters in m/s
     DELTA    = 4098 * (0.6108 * math.exp((17.27 * T_mean) / (T_mean + 237.3))) / ((T_mean + 237.3) ** 2) # Slope of the saturation vapor pressure-temperature curve in kPa/°C
-    p        = weather_data.pressure                    # Atmospheric pressure in kPa
+    # p        = weather_data.pressure                    # Atmospheric pressure in kPa
     y        = (1.013 ** -3 * p) / 0.622                # Psychrometric constant in kPa/°C
     DT       = DELTA / (DELTA + y * (1 + 0.34 * u_2))   # Slope of the vapor pressure-temperature curve in kPa/°C
     PT       = y/(DELTA + y * (1 + 0.34 * u_2))         # Psychrometric constant in kPa/°C
     TT       = 900 / (T_mean + 273.3) * u_2             # Temperature term in kPa/°C
     e_s      = 0.6108 * math.exp((17.27 * T_mean) / (T_mean + 237.3)) # Saturation vapor pressure in kPa
-    e_a      = e_s * (weather_data.humidity/100)        # Actual vapor pressure in kPa
+    e_a      = e_s * (e_a/100)        # Actual vapor pressure in kPa
     dr       = 1 + 0.033 * math.cos((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday) # Inverse relative distance Earth-Sun
     delta    = 0.409 * math.sin((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday - 1.39) # Solar declination in radians
-    lat_rad  = math.radians(latitude)                     #phi
+    lat_rad  = math.radians(latitude)                   #phi
     w_s      = math.acos(-math.tan(lat_rad) * math.tan(delta)) # Sunset hour angle in radians
     R_a      = 24 * 60 / math.pi * 0.082 * dr * (w_s * math.sin(lat_rad) * math.sin(delta) + math.cos(lat_rad) * math.cos(delta) * math.sin(w_s)) # Extraterrestrial radiation in MJ/m²/day
     R_so     = (0.75 + 2 * 10 ** -5 * 9.5) * R_a        # Clear-sky solar radiation in MJ/m²/day
@@ -270,8 +270,27 @@ def add_irrigation():
     # Get user input for irrigation data
     irrigation_data['date'] = input("Enter the date of irrigation (YYYY-MM-DD): ")
     irrigation_data['time'] = input("Enter the time of irrigation (HH:MM): ")
-    irrigation_data['amount'] = float(input("Enter the amount of water applied (in mm): "))
-
+    amount = input("Enter the amount of water applied (in mm): ")
+    
+    try:
+        sowing_date = datetime.strptime(start_date.strftime("%Y-%m-%d"), "%Y-%m-%d").date()
+        irrigation_date = datetime.strptime(irrigation_data['date'], "%Y-%m-%d").date()
+        irrigation_time = datetime.strptime(irrigation_data['time'], "%H:%M").time()
+        current_datetime = datetime.now().date()
+    
+        if irrigation_date < sowing_date or irrigation_date > current_datetime:
+            print("Invalid input. Please enter a date between the sowing date and today.")
+            return
+    
+        if irrigation_date == sowing_date and irrigation_time < datetime.now().time():
+            print("Invalid input. Please enter a time after the current time.")
+            return
+    
+        irrigation_data['amount'] = float(amount)
+    except ValueError:
+        print("Invalid input. Please enter a valid date, time, and amount.")
+        return
+    
     # Write irrigation data to a file
     with open('irrigation_data.json', 'r+') as file:
         data = json.load(file)
@@ -285,12 +304,14 @@ def add_irrigation():
 
 def print_irrigation_data():
     with open('irrigation_data.json', 'r') as file:
-        for line in file:
-            data = json.loads(line)
-            print("Date:\t", data['date'])
-            print("Time:\t", data['time'])
-            print("Amount:\t", data['amount'], "mm")
-            print()
+        try:
+            data = json.load(file)  # load the entire JSON file
+            print("\nSaved irrigations:")
+            for item in data:
+                print(f"{item['date']} {item['time']}: {item['amount']} mm")
+        except json.JSONDecodeError:
+            print("Invalid JSON file")
+    print("")  # Add a newline after printing the data
 
 
 def change_core_variables():
@@ -366,6 +387,42 @@ def visulize_last_24h():                                #MARK: Visualize data
     plt.show()
 
 
+def get_data_for_plotting():
+    allTemperature      = []
+    allHumidity         = []
+    allWindSpeed        = []
+    allSolarRadiation   = []
+    allPressure         = []
+    allDates            = []
+    allRain             = []
+
+    PET_10min           = []
+    PET_10min_acc       = []
+    water_deficit_10min = []
+
+    for i in range(len(file_names())):
+        extract_data(file_names()[i])
+        allTemperature      += weather_data_all.temperature
+        allHumidity         += weather_data_all.humidity
+        allWindSpeed        += weather_data_all.wind_speed
+        allSolarRadiation   += weather_data_all.solar_radiation
+        allPressure         += weather_data_all.pressure
+        allDates            += weather_data_all.time
+        allRain             += weather_data_all.rain
+
+        for j in range(len(weather_data_all.time)):
+            PET_10min.append((calc_PET(weather_data_all.temperature[j], weather_data_all.solar_radiation[j], weather_data_all.wind_speed[j], weather_data_all.pressure[j], weather_data_all.humidity[j])/144)) # mm/10min (mm/day / 144 = mm/10min)
+
+        for k in range(len(weather_data_all.time)):
+            PET_10min_acc.append(weather_data_all.rain[k]) # returns 144 0.0 values, need to fix this!!!!!!!
+
+
+    print (weather_data_all.rain)
+    # print (PET_10min)
+    # print (allDates)
+    # print (PET_10min_acc)
+
+
 
 
 if __name__ == "__main__":                          # MARK: Main
@@ -396,7 +453,7 @@ if __name__ == "__main__":                          # MARK: Main
     print ("Data of sowing:\t\t\t\t\t", start_date, "(", days_since_sowing, "days ago)")
 
     print ("\n24H REPORT:")
-    print ("Potential evapotranspiration:\t\t\t", round(calc_PET(weather_data_avg_24h), 2), "mm/day")
+    print ("Potential evapotranspiration:\t\t\t", round(calc_PET(weather_data_avg_24h.temperature, weather_data_avg_24h.solar_radiation, weather_data_avg_24h.wind_speed, weather_data_avg_24h.pressure, weather_data_avg_24h.humidity), 2), "mm/day")
 
     if weather_data_avg_24h.rain == 0:
         print ("Rainfall:\t\t\t\t\t", "na")
@@ -413,8 +470,8 @@ if __name__ == "__main__":                          # MARK: Main
     extract_data(file_names())
     
     print (f"SINCE SOWING REPORT (untill {weather_data_all.time[-1]} (UTC)):")
-    print ("Acumulative potential evapotranspiration:\t", round (calc_PET(weather_data_avg_sowing) * days_since_sowing,2), "mm")
-
+    print ("Acumulative potential evapotranspiration:\t", round (calc_PET(weather_data_avg_sowing.temperature, weather_data_avg_sowing.solar_radiation, weather_data_avg_sowing.wind_speed, weather_data_avg_sowing.pressure, weather_data_avg_sowing.humidity) * days_since_sowing,2), "mm")
+    
     if weather_data_avg_sowing.rain == 0:
         print ("Acumulative rainfall:\t\t\t\t", "na")
     else:
@@ -432,3 +489,5 @@ if __name__ == "__main__":                          # MARK: Main
     #visulize_last_24h()
 
     print("Job done!")
+
+    get_data_for_plotting()
