@@ -223,7 +223,7 @@ def calc_PET(weather_data):                             #MARK: PET calculation
     R_a      = 24 * 60 / math.pi * 0.082 * dr * (w_s * math.sin(lat_rad) * math.sin(delta) + math.cos(lat_rad) * math.cos(delta) * math.sin(w_s)) # Extraterrestrial radiation in MJ/m²/day
     R_so     = (0.75 + 2 * 10 ** -5 * 9.5) * R_a        # Clear-sky solar radiation in MJ/m²/day
     R_ns     = (1 - 0.23) * R_s                         # Net solar radiation in MJ/m²/day
-    R_nl     = 4.903e-9 * (T_mean+273.16) ** 4 * (0.34-0.14 * math.sqrt(e_a)) * (1.35 * R_s / R_so - 0.35) 
+    R_nl     = 4.903e-9 * (T_mean+273.16) ** 4 * (0.34-0.14 * math.sqrt(e_a)) * (1.35 * R_s / R_so - 0.35) # Net outgoing longwave radiation in MJ/m²/day
     R_n      = R_ns - R_nl                              # Net radiation in MJ/m²/day
     R_ng     = R_n * 0.408                              # Net radiation in MJ/m²/day
     ET_rad   = DT * R_ng                                # Radiation term in mm/day
@@ -322,7 +322,7 @@ def cal_water_deficit():
     return water_deficit
 
 
-def visulize_data():                                #MARK: Visualize data
+def visulize_last_24h():                                #MARK: Visualize data
     fig, axs = plt.subplots(3, 2, figsize=(15, 60)) # Increase the figsize to create more vertical space
 
     axs[0, 0].plot(weather_data_all.time, weather_data_all.temperature, label="Temperature")
@@ -377,8 +377,8 @@ if __name__ == "__main__":                          # MARK: Main
             add_irrigation()
         elif user_input == "print irrigation":
             print_irrigation_data()
-        elif user_input == "visualize data":
-            visualize_data()
+        # elif user_input == "visualize data":
+        #     visulize_data()
         elif user_input == "exit":
             exit()
         elif user_input == "":
@@ -429,6 +429,6 @@ if __name__ == "__main__":                          # MARK: Main
     print (f"Irrigation System 2 ({m2_irrigation_2} m²):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation, 2), "L")
     print (f"Irrigation System 3 ({m2_irrigation_3} m²):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation, 2), "L\n")
 
-    #visulize_data()
+    #visulize_last_24h()
 
     print("Job done!")
