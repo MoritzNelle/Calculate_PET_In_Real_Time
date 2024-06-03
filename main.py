@@ -10,7 +10,7 @@ start_date      = date(2024, 5, 13)                 #YYYY, MM, DD   # Start date
 m2_irrigation_1 = 150                               # Area in m² that is covered by irrigation system 1
 m2_irrigation_2 = 150                               # Area in m² that is covered by irrigation system 2
 m2_irrigation_3 = 200                               # Area in m² that is covered by irrigation system 3
-latitude        = 51.989                            # Latitude of the location in degrees
+latitude        = 51.989                            # Latitude of the location in degrees (decimal)
 
 # SYSTEM VARIABLES (GLOBAL)
 overall_area = m2_irrigation_1 + m2_irrigation_2 + m2_irrigation_3
@@ -32,7 +32,7 @@ def get_save_data(url):                             #MARK: get and save data
 
         filename_24h = f"entrie_raw_data_24h/raw_data_{timestamp}.csv"
 
-        with open(filename_24h, "w") as file:           # Save the scraped text into a file
+        with open(filename_24h, "w") as file:       # Save the scraped text into a file
             file.write(response.text)
 
         print(f"Weather data saved to {filename_24h}")
@@ -309,7 +309,8 @@ if __name__ == "__main__":                          # MARK: Main
     get_save_data(url_24h)
     extract_data(filename_24h)
 
-    print ("\nLast data set update: ", timestamp_from_URL(get_URLs(start_date)[-1]), weather_data_all.time[-1])
+    print ("\nLast data set update:\t\t\t\t", timestamp_from_URL(get_URLs(start_date)[-1]), weather_data_all.time[-1], "(UTC)")
+    print ("Data of sowing:\t\t\t\t\t", start_date, "(", days_since_sowing, "days ago)")
 
     print ("\n24H REPORT:")
     print ("Potential evapotranspiration:\t\t\t", round(calc_PET(weather_data_avg_24h), 2), "mm/day")
@@ -328,7 +329,7 @@ if __name__ == "__main__":                          # MARK: Main
     get_save_data(get_URLs(start_date))             #calls get_save_data with a list of URLs, since sowing the date
     extract_data(file_names())
     
-    print ("SINCE SOWING REPORT (untill last midnight):")
+    print (f"SINCE SOWING REPORT (untill {weather_data_all.time[-1]} (UTC)):")
     print ("Acumulative potential evapotranspiration:\t", round (calc_PET(weather_data_avg_sowing) * days_since_sowing,2), "mm")
 
     if weather_data_avg_sowing.rain == 0:
@@ -336,16 +337,17 @@ if __name__ == "__main__":                          # MARK: Main
     else:
         print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
 
-    print ("Acumulative water deficit:\t\t\t",  round ((ET_0 * days_since_sowing) - weather_data_avg_sowing.rain, 2), "mm\n")
+    water_deficit = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain
+    print ("Water deficit:\t\t\t\t\t",  round (water_deficit, 2), "mm\n")
 
     print ("IRRIGATION NEEDED (90% efficiency):")
-    overall_irrigation = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain / 0.9
-    print (f"Irrigation needed overall ({overall_area} m2):\t\t", round (overall_irrigation,2), "mm")
-    print (f"Irrigation System 1 ({m2_irrigation_1} m2):\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation*m2_irrigation_1, 2), " L")
-    print (f"Irrigation System 2 ({m2_irrigation_2} m2):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation*m2_irrigation_2, 2), " L")
-    print (f"Irrigation System 3 ({m2_irrigation_3} m2):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation*m2_irrigation_3, 2), " L\n")
+    overall_irrigation = (water_deficit * overall_area) / 0.9
+    print (f"Irrigation needed overall ({overall_area} m²):\t\t", round ((overall_irrigation), 2), "L")
+    print (f"Irrigation System 1 ({m2_irrigation_1} m²):\t\t\t", round ((m2_irrigation_1/overall_area)*overall_irrigation, 2), "L")
+    print (f"Irrigation System 2 ({m2_irrigation_2} m²):\t\t\t", round ((m2_irrigation_2/overall_area)*overall_irrigation, 2), "L")
+    print (f"Irrigation System 3 ({m2_irrigation_3} m²):\t\t\t", round ((m2_irrigation_3/overall_area)*overall_irrigation, 2), "L\n")
 
 
-    #visulize_data()
+    visulize_data()
 
     print("Job done!\n")
