@@ -269,7 +269,7 @@ def add_irrigation():
     irrigation_data = {}
 
     # Get user input for irrigation data
-    irrigation_data['date'] = input("Enter the date of irrigation (YYYY-MM-DD): ")
+    irrigation_data['date'] = input("\nEnter the date of irrigation (YYYY-MM-DD): ")
     irrigation_data['time'] = input("Enter the time of irrigation (HH:MM): ")
     amount = input("Enter the amount of water applied (in mm): ")
     
@@ -280,16 +280,16 @@ def add_irrigation():
         current_datetime = datetime.now().date()
     
         if irrigation_date < sowing_date or irrigation_date > current_datetime:
-            print("Invalid input. Please enter a date between the sowing date and today.")
+            print("Invalid input. Please enter a date between the sowing date and today.\n")
             return
     
         if irrigation_date == sowing_date and irrigation_time < datetime.now().time():
-            print("Invalid input. Please enter a time after the current time.")
+            print("Invalid input. Please enter a time after the current time.\n")
             return
     
         irrigation_data['amount'] = float(amount)
     except ValueError:
-        print("Invalid input. Please enter a valid date, time, and amount.")
+        print("Invalid input. Please enter a valid date, time, and amount.\n")
         return
     
     # Write irrigation data to a file
@@ -300,7 +300,7 @@ def add_irrigation():
         file.write(json.dumps(data, indent=4))
         file.truncate()
 
-    print("Irrigation data has been recorded.")
+    print("Irrigation data has been recorded.\n")
 
 
 def print_irrigation_data():
@@ -329,6 +329,31 @@ def change_core_variables():
         json.dump(core_variables, file)
 
     print("Core variables have been updated and saved to core_variables.json.")
+
+def delete_irrigation():
+
+    with open('irrigation_data.json', 'r') as file:
+        try:
+            data = json.load(file)  # load the entire JSON file
+        except json.JSONDecodeError:
+            print("Invalid JSON file")
+            return
+
+    print("\nSaved irrigations:")
+    for i, item in enumerate(data):
+        print(f"{i + 1}. {item['date']} {item['time']}: {item['amount']} mm")
+
+    try:
+        index = int(input("Enter the index of the irrigation data you want to delete: ")) - 1
+        del data[index]
+    except (ValueError, IndexError):
+        print("Invalid input. Please enter a valid index.\n")
+        return
+
+    with open('irrigation_data.json', 'w') as file:
+        json.dump(data, file, indent=4)
+
+    print("Irrigation data has been deleted.\n")
 
 
 def sum_irrigation():
@@ -452,6 +477,8 @@ if __name__ == "__main__":                          # MARK: Main
             break
         elif user_input == "change core variables":
             change_core_variables()
+        elif user_input == "delete irrigation":
+            delete_irrigation()
         else:
             print("Invalid command.")
 
