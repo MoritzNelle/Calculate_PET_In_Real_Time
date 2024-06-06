@@ -17,7 +17,8 @@ start_date      = datetime.strptime(data['start_date'], "%Y-%m-%d").date()
 m2_irrigation_1 = data['m2_irrigation_1']
 m2_irrigation_2 = data['m2_irrigation_2']
 m2_irrigation_3 = data['m2_irrigation_3']
-latitude        = data['latitude']                            # Latitude of the location in degrees (decimal)
+latitude        = data['latitude']                              # Latitude of the location in degrees (decimal)
+field_capacity  = data['field_capacity']                        # Field capacity of the soil in mm/mm
 
 # SYSTEM VARIABLES (GLOBAL)
 overall_area = m2_irrigation_1 + m2_irrigation_2 + m2_irrigation_3
@@ -317,10 +318,11 @@ def print_irrigation_data():
 def change_core_variables():
     core_variables = {
         "start_date": input("Enter the start date (YYYY-MM-DD): "),
-        "m2_irrigation_1": float(input("Enter the area covered by irrigation system 1 (in m²): ")),
-        "m2_irrigation_2": float(input("Enter the area covered by irrigation system 2 (in m²): ")),
-        "m2_irrigation_3": float(input("Enter the area covered by irrigation system 3 (in m²): ")),
-        "latitude": float(input("Enter the latitude of the location (in degrees, decimal): "))
+        "m2_irrigation_1":  float(input("Enter the area covered by irrigation system 1 (in m²): "   )),
+        "m2_irrigation_2":  float(input("Enter the area covered by irrigation system 2 (in m²): "   )),
+        "m2_irrigation_3":  float(input("Enter the area covered by irrigation system 3 (in m²): "   )),
+        "latitude":         float(input("Enter the latitude of the location (in degrees, decimal): ")),
+        "field_capacity":   float(input("Enter the field capacity of the soil (in mm/mm): "         ))
     }
 
     with open('core_variables.json', 'w') as file:
@@ -329,7 +331,7 @@ def change_core_variables():
     print("Core variables have been updated and saved to core_variables.json.")
 
 
-def cal_water_deficit():
+def sum_irrigation():
     sum_irrigation = 0
 
     with open('irrigation_data.json', 'r') as file:
@@ -337,8 +339,16 @@ def cal_water_deficit():
 
     for data in irrigation_data:    # Calculate the total irrigation amount
         sum_irrigation += data['amount']
+    
+    return sum_irrigation
 
-    water_deficit = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain - sum_irrigation
+
+def cal_water_deficit():
+
+    water_deficit = (ET_0 * days_since_sowing) - weather_data_avg_sowing.rain - sum_irrigation()
+
+    if water_deficit < (- field_capacity*1000): # limit the water deficit to the field capacity
+        water_deficit = - field_capacity*1000
 
     return water_deficit
 
@@ -417,7 +427,7 @@ def get_data_for_plotting():
             PET_10min_acc.append(weather_data_all.rain[k]) # returns 144 0.0 values, need to fix this!!!!!!!
 
 
-    print (weather_data_all.rain)
+    # print (weather_data_all.rain)
     # print (PET_10min)
     # print (allDates)
     # print (PET_10min_acc)
@@ -476,6 +486,8 @@ if __name__ == "__main__":                          # MARK: Main
         print ("Acumulative rainfall:\t\t\t\t", "na")
     else:
         print ("Acumulative rainfall:\t\t\t\t",  round (weather_data_avg_sowing.rain,2), "mm")
+
+    print ("Acumulative irrigation:\t\t\t\t",  round (sum_irrigation(), 2), "mm")
 
     print ("Water deficit:\t\t\t\t\t",  round (cal_water_deficit(), 2), "mm\n")
 
