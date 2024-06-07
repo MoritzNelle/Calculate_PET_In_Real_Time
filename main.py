@@ -124,7 +124,7 @@ def extract_data(filename):                         #MARK: Extract data from fil
             temp.append (float(line[ 2]))
             humi.append (float(line[18]))
             wind.append (float(line[38]))
-            radi.append (float(line[19]))
+            radi.append (float(line[19])+float(line[21]))
             pres.append (float(line[32]))
             rain.append (float(line[29]))
             time.append (      line[ 1])
@@ -159,7 +159,7 @@ def extract_data(filename):                         #MARK: Extract data from fil
                 temp.append (float(line[ 2]))
                 humi.append (float(line[18]))
                 wind.append (float(line[38]))
-                radi.append (float(line[19]))
+                radi.append (float(line[19])+float(line[21]))
                 pres.append (float(line[32]))
                 rain.append (float(line[29]))
                 time.append (line[1])
@@ -187,7 +187,7 @@ def extract_data(filename):                         #MARK: Extract data from fil
                 temp.append (float(line[ 2]))
                 humi.append (float(line[18]))
                 wind.append (float(line[38]))
-                radi.append (float(line[19]))
+                radi.append (float(line[19])+float(line[21]))
                 pres.append (float(line[32]))
                 rain.append (float(line[29]))
                 time.append (line[1])
@@ -217,7 +217,7 @@ def calc_PET(T_mean, R_s, u_2, p, e_a):                 #MARK: PET calculation
     PT       = y/(DELTA + y * (1 + 0.34 * u_2))         # Psychrometric constant in kPa/°C
     TT       = 900 / (T_mean + 273.3) * u_2             # Temperature term in kPa/°C
     e_s      = 0.6108 * math.exp((17.27 * T_mean) / (T_mean + 237.3)) # Saturation vapor pressure in kPa
-    e_a      = e_s * (e_a/100)        # Actual vapor pressure in kPa
+    e_a      = e_s * (e_a/100)                          # Actual vapor pressure in kPa
     dr       = 1 + 0.033 * math.cos((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday) # Inverse relative distance Earth-Sun
     delta    = 0.409 * math.sin((2 * math.pi) / 365 * datetime.now().timetuple().tm_yday - 1.39) # Solar declination in radians
     lat_rad  = math.radians(latitude)                   #phi
